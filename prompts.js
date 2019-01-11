@@ -133,5 +133,18 @@ module.exports = [
     default: '/*',
     when: answers => answers.enableCloudfront === true,
     validate: input => input !== '' ? true : 'At least one invalidation path is required. To invalidate all files, enter /* '
+  },
+  {
+    name: 'gzip',
+    type: 'confirm',
+    message: 'Enable GZIP compression?',
+    default: false
+  },
+  {
+    name: 'gzipFilePattern',
+    type: 'input',
+    message: 'Files matching this pattern will be gzipped. Note: image files such as .png, .jpg and .gif should not be gzipped.',
+    default: '**/*.{js,css,json,ico,map,xml,txt,svg,eot,ttf,woff,woff2}',
+    when: answers => answers.gzip === true
   }
 ]
