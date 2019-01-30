@@ -306,12 +306,9 @@ module.exports = async (options, api) => {
   options.uploadOptions = { partSize: (5 * 1024 * 1024), queueSize: 4 }
 
   const deployDirPath = getFullPath(deployDir)
-  const filesToDeploy = getAllFiles(deployDirPath)
   let filesToGzip = []
 
   const bucketDeployPath = parseDeployPath(options.deployPath)
-  const uploadTotal = filesToDeploy.length
-  let uploadCount = 0
 
   const remotePath = options.staticHosting
     ? `https://s3-${options.region}.amazonaws.com/${options.bucket}/`
@@ -325,6 +322,10 @@ module.exports = async (options, api) => {
     info("Gzipping " + String(filesToGzip.length) + " files.")
     await gzipFiles(filesToGzip)
   }
+
+  const filesToDeploy = getAllFiles(deployDirPath)
+  const uploadTotal = filesToDeploy.length
+  let uploadCount = 0
 
   const uploadPool = new PromisePool(() => {
     if (filesToDeploy.length === 0) return null
@@ -377,65 +378,4 @@ module.exports = async (options, api) => {
     process.exit(1)
   }
 
-  /*
-
-  let fullAssetPath = path.join(process.cwd(), options.assetPath) + path.sep // path.sep appends a trailing / or \ depending on platform.
-  let fileList = getAllFiles(options.assetMatch, fullAssetPath)
-
-  let deployPath = options.deployPath
-  // We don't need a leading slash for root deploys on S3.
-  if (deployPath.startsWith('/')) deployPath = deployPath.slice(1, deployPath.length)
-  // But we do need to make sure there's a trailing one on the path.
-  if (!deployPath.endsWith('/') && deployPath.length > 0) deployPath = deployPath + '/'
-
-  let uploadCount = 0
-  let uploadTotal = fileList.length
-
-  let remotePath = `https://${options.bucket}.s3-website-${options.region}.amazonaws.com/`
-  if (options.staticHosting) {
-    remotePath = `https://s3-${options.region}.amazonaws.com/${options.bucket}/`
-  }
-
-
-  info(`Deploying ${fileList.length} assets from ${fullAssetPath} to ${remotePath}`)
-
-  let nextFile = () => {
-    if (fileList.length === 0) return null
-
-    let filename = fileList.pop()
-    let fileStream = fs.readFileSync(filename)
-    let fileKey = filename.replace(fullAssetPath, '').replace(/\\/g, '/')
-
-    let fullFileKey = `${deployPath}${fileKey}`
-
-    return uploadFile(fullFileKey, fileStream, options)
-    .then(() => {
-      uploadCount++
-
-      let pwaSupport = options.pwa && options.pwaFiles.split(',').indexOf(fileKey) > -1
-      let pwaStr = pwaSupport ? ' with cache disabled for PWA' : ''
-
-      info(`(${uploadCount}/${uploadTotal}) Uploaded ${fullFileKey}${pwaStr}`)
-      // resolve()
-    })
-    .catch((e) => {
-      error(`Upload failed: ${fullFileKey}`)
-      error(e.toString())
-      // reject(e)
-    })
-  }
-
-  const uploadPool = new PromisePool(nextFile, parseInt(options.uploadConcurrency, 10))
-
-  try {
-    await uploadPool.start()
-    info('Deployment complete.')
-
-    if (options.enableCloudfront) {
-      invalidateDistribution(options)
-    }
-  } catch (uploadErr) {
-    error(`Deployment completed with errors.`)
-    error(`${uploadErr.toString()}`)
-  }*/
 }
